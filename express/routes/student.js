@@ -54,7 +54,6 @@ router.post(
   ],
   (req, res) => {
     const { courseId } = req.body;
-    console.log(courseId);
     const { requestorid } = req.headers;
 
     const errors = validationResult(req);
