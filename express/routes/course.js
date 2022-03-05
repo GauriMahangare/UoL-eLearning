@@ -171,65 +171,25 @@ router.get(
       });
     }
 
-    if (requestorid) {
-      userExists(requestorid).then(
-        (result) => {
-          user = result[0];
-          if (user.length > 0) {
-            getCourseDetail(id).then(
+    getCourseDetail(id).then(
+      (result) => {
+        course = result[0];
+        if (course.length > 0) {
+          if (course[0].isAvailable) {
+            userExists(course[0].TeacherID).then(
               (result) => {
-                course = result[0];
-                if (course.length > 0) {
-                  if (course[0].isAvailable) {
-                    userExists(course[0].TeacherID).then(
-                      (result) => {
-                        teacher = result[0];
-                        if (teacher.length > 0) {
-                          return res.status(200).json({
-                            errorCode: "000-000",
-                            courseTitle: `${course[0].Title}`,
-                            teacherName: `${teacher[0].Name}`,
-                          });
-                        } else {
-                          return res.status(400).json({
-                            errorCode: "400-001",
-                            errorMessage: `Object not Found`,
-                            errorDetails: `${course[0].TeacherID} - Teacher not Found.`,
-                            callId: uuid(),
-                            requestUserId: `${requestorid}`,
-                            apiVersion: `${apiVersion}`,
-                            time: new Date(),
-                          });
-                        }
-                      },
-                      (error) => {
-                        res.status(500).send({
-                          errorCode: "500-001",
-                          errorMessage: `Server Error`,
-                          errorDetails: `${requestorid} - Internal Server Error.`,
-                          callId: uuid(),
-                          requestUserId: `${requestorid}`,
-                          apiVersion: `${apiVersion}`,
-                          time: new Date(),
-                        });
-                      }
-                    );
-                  } else {
-                    return res.status(400).json({
-                      errorCode: "400-102",
-                      errorMessage: `Course is not available.`,
-                      errorDetails: `${course[0].Title} - Course is not available.`,
-                      callId: uuid(),
-                      requestUserId: `${requestorid}`,
-                      apiVersion: `${apiVersion}`,
-                      time: new Date(),
-                    });
-                  }
+                teacher = result[0];
+                if (teacher.length > 0) {
+                  return res.status(200).json({
+                    errorCode: "000-000",
+                    courseTitle: `${course[0].Title}`,
+                    teacherName: `${teacher[0].Name}`,
+                  });
                 } else {
                   return res.status(400).json({
                     errorCode: "400-001",
                     errorMessage: `Object not Found`,
-                    errorDetails: `${id} - Course not Found.`,
+                    errorDetails: `${course[0].TeacherID} - Teacher not Found.`,
                     callId: uuid(),
                     requestUserId: `${requestorid}`,
                     apiVersion: `${apiVersion}`,
@@ -250,40 +210,40 @@ router.get(
               }
             );
           } else {
-            res.status(400).send({
-              errorCode: "400-001",
-              errorMessage: `Object not found`,
-              errorDetails: `${requestorid} - Requestor not found.`,
+            return res.status(400).json({
+              errorCode: "400-102",
+              errorMessage: `Course is not available.`,
+              errorDetails: `${course[0].Title} - Course is not available.`,
               callId: uuid(),
               requestUserId: `${requestorid}`,
               apiVersion: `${apiVersion}`,
               time: new Date(),
             });
           }
-        },
-        (error) => {
-          res.status(500).send({
-            errorCode: "500-001",
-            errorMessage: `Server Error`,
-            errorDetails: `${requestorid} - Internal Server Error.`,
+        } else {
+          return res.status(400).json({
+            errorCode: "400-001",
+            errorMessage: `Object not Found`,
+            errorDetails: `${id} - Course not Found.`,
             callId: uuid(),
             requestUserId: `${requestorid}`,
             apiVersion: `${apiVersion}`,
             time: new Date(),
           });
         }
-      );
-    } else {
-      res.status(400).send({
-        errorCode: "400-003",
-        errorMessage: `Missing required parameter`,
-        errorDetails: `Missing Requestor ID`,
-        callId: uuid(),
-        requestUserId: `${requestorid}`,
-        apiVersion: `${apiVersion}`,
-        time: new Date(),
-      });
-    }
+      },
+      (error) => {
+        res.status(500).send({
+          errorCode: "500-001",
+          errorMessage: `Server Error`,
+          errorDetails: `${requestorid} - Internal Server Error.`,
+          callId: uuid(),
+          requestUserId: `${requestorid}`,
+          apiVersion: `${apiVersion}`,
+          time: new Date(),
+        });
+      }
+    );
   }
 );
 
@@ -314,7 +274,7 @@ router.put(
         time: new Date(),
       });
     }
-    if (id && requestorid) {
+    if (id) {
       if (teacherId) {
         userExists(teacherId).then(
           (result) => {

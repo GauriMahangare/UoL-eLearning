@@ -23,19 +23,6 @@ function isNumeric(str) {
   ); // ...and ensure strings of whitespace fail
 }
 
-//validate if student exists
-async function userExists(userID) {
-  query = `SELECT * FROM mydb.users Where UserID=${userID}`;
-  let user = await db.promise().query(query);
-  return await user;
-}
-//Get student Role
-async function getUserRole(roleId) {
-  query = `SELECT * FROM mydb.roles WHERE RoleID=${roleId}`;
-  let role = await db.promise().query(query);
-  return await role;
-}
-
 //Get one course
 async function getCourseDetail(courseId) {
   query = `SELECT * FROM mydb.courses WHERE CourseID=${courseId}`;
@@ -69,153 +56,71 @@ router.post(
       });
     }
 
-    if (requestorid) {
-      userExists(requestorid).then(
-        (result) => {
-          user = result[0];
-          if (user.length > 0) {
-            getUserRole(user[0].RoleID).then(
-              (result) => {
-                role = result[0];
-                if (role.length > 0) {
-                  if (role[0].RoleID === 3) {
-                    getCourseDetail(courseId).then(
-                      (result) => {
-                        course = result[0];
-                        if (course.length > 0) {
-                          if (course[0].isAvailable === 1) {
-                            var sqlQuery = `INSERT INTO mydb.enrolments (CourseID,UserID) VALUES ('${courseId}','${requestorid}')`;
-                            db.query(sqlQuery, (err, result) => {
-                              if (err) {
-                                return res.status(400).json({
-                                  errorCode: "400-005",
-                                  errorMessage: `Duplicate Record`,
-                                  errorDetails: `Requestor ${user[0].Name} is already enrolled to the course ${course[0].Title}.`,
-                                  callId: uuid(),
-                                  requestUserId: `${requestorid}`,
-                                  apiVersion: `${apiVersion}`,
-                                  time: new Date(),
-                                });
-                              } else {
-                                console.log(
-                                  result.affectedRows + " record(s) Added"
-                                );
-                                res.status(200).send({
-                                  errorCode: "000-000",
-                                  callId: uuid(),
-                                  requestUserId: `${requestorid}`,
-                                  apiVersion: `${apiVersion}`,
-                                  msg: ` ${requestorid} enrolled in course ID:${courseId} successfully.`,
-                                  time: new Date(),
-                                });
-                              }
-                            });
-                          } else {
-                            return res.status(400).json({
-                              errorCode: "400-100",
-                              errorMessage: `Course Inactive`,
-                              errorDetails: `Course not available for enrolment.Please contact admin.`,
-                              callId: uuid(),
-                              requestUserId: `${requestorid}`,
-                              apiVersion: `${apiVersion}`,
-                              time: new Date(),
-                            });
-                          }
-                        } else {
-                          return res.status(400).json({
-                            errorCode: "400-001",
-                            errorMessage: `Object not Found`,
-                            errorDetails: `${courseId} - Course not Found.`,
-                            callId: uuid(),
-                            requestUserId: `${requestorid}`,
-                            apiVersion: `${apiVersion}`,
-                            time: new Date(),
-                          });
-                        }
-                      },
-
-                      (error) => {
-                        res.status(500).send({
-                          errorCode: "500-001",
-                          errorMessage: `Server Error`,
-                          errorDetails: `${requestorid} - Internal Server Error.`,
-                          callId: uuid(),
-                          requestUserId: `${requestorid}`,
-                          apiVersion: `${apiVersion}`,
-                          time: new Date(),
-                        });
-                      }
-                    );
-                  } else {
-                    return res.status(400).json({
-                      errorCode: "400-004",
-                      errorMessage: `Role Error`,
-                      errorDetails: `Requestor is not a student - ${requestorId}`,
-                      callId: uuid(),
-                      requestUserId: `${requestorid}`,
-                      apiVersion: `${apiVersion}`,
-                      time: new Date(),
-                    });
-                  }
-                } else {
-                  return res.status(400).json({
-                    errorCode: "400-004",
-                    errorMessage: `Role Error`,
-                    errorDetails: `User ${requestorId} role not defined.`,
-                    callId: uuid(),
-                    requestUserId: `${requestorid}`,
-                    apiVersion: `${apiVersion}`,
-                    time: new Date(),
-                  });
-                }
-              },
-              (error) => {
-                res.status(500).send({
-                  errorCode: "500-001",
-                  errorMessage: `Server Error`,
-                  errorDetails: `${requestorid} - Internal Server Error.`,
+    getCourseDetail(courseId).then(
+      (result) => {
+        course = result[0];
+        if (course.length > 0) {
+          if (course[0].isAvailable === 1) {
+            var sqlQuery = `INSERT INTO mydb.enrolments (CourseID,UserID) VALUES ('${courseId}','${requestorid}')`;
+            db.query(sqlQuery, (err, result) => {
+              if (err) {
+                return res.status(400).json({
+                  errorCode: "400-005",
+                  errorMessage: `Duplicate Record`,
+                  errorDetails: `Requestor ${user[0].Name} is already enrolled to the course ${course[0].Title}.`,
                   callId: uuid(),
                   requestUserId: `${requestorid}`,
                   apiVersion: `${apiVersion}`,
                   time: new Date(),
                 });
+              } else {
+                console.log(result.affectedRows + " record(s) Added");
+                res.status(200).send({
+                  errorCode: "000-000",
+                  callId: uuid(),
+                  requestUserId: `${requestorid}`,
+                  apiVersion: `${apiVersion}`,
+                  msg: ` ${requestorid} enrolled in course ID:${courseId} successfully.`,
+                  time: new Date(),
+                });
               }
-            );
+            });
           } else {
-            res.status(400).send({
-              errorCode: "400-001",
-              errorMessage: `Object not found`,
-              errorDetails: `${requestorId} - Requestor not found.`,
+            return res.status(400).json({
+              errorCode: "400-100",
+              errorMessage: `Course Inactive`,
+              errorDetails: `Course not available for enrolment.Please contact admin.`,
               callId: uuid(),
               requestUserId: `${requestorid}`,
               apiVersion: `${apiVersion}`,
               time: new Date(),
             });
           }
-        },
-        (error) => {
-          res.status(500).send({
-            errorCode: "500-001",
-            errorMessage: `Server Error`,
-            errorDetails: `${requestorid} - Internal Server Error.`,
+        } else {
+          return res.status(400).json({
+            errorCode: "400-001",
+            errorMessage: `Object not Found`,
+            errorDetails: `${courseId} - Course not Found.`,
             callId: uuid(),
             requestUserId: `${requestorid}`,
             apiVersion: `${apiVersion}`,
             time: new Date(),
           });
         }
-      );
-    } else {
-      res.status(400).send({
-        errorCode: "400-003",
-        errorMessage: `Missing required parameter`,
-        errorDetails: `Requestor ID is required.`,
-        callId: uuid(),
-        requestUserId: `Missing`,
-        apiVersion: `${apiVersion}`,
-        time: new Date(),
-      });
-    }
+      },
+
+      (error) => {
+        res.status(500).send({
+          errorCode: "500-001",
+          errorMessage: `Server Error`,
+          errorDetails: `${requestorid} - Internal Server Error.`,
+          callId: uuid(),
+          requestUserId: `${requestorid}`,
+          apiVersion: `${apiVersion}`,
+          time: new Date(),
+        });
+      }
+    );
   }
 );
 
@@ -248,116 +153,48 @@ router.put(
       });
     }
 
-    if (requestorid) {
-      userExists(requestorid).then(
-        (result) => {
-          user = result[0];
-          if (user.length > 0) {
-            getUserRole(user[0].RoleID).then(
-              (result) => {
-                role = result[0];
-                if (role.length > 0) {
-                  if (role[0].RoleID === 2) {
-                    var sqlQuery = `UPDATE mydb.enrolments SET Mark = ${marks} WHERE CourseID=${courseId} and UserID=${id};`;
-                    db.query(sqlQuery, (err, result) => {
-                      if (err) {
-                        console.log(err);
-                        return res.status(400).json({
-                          errorCode: "400-001",
-                          errorMessage: `Object not found`,
-                          errorDetails: `Student ${id} not enrolled for Course ${courseId}.`,
-                          callId: uuid(),
-                          requestUserId: `${requestorid}`,
-                          apiVersion: `${apiVersion}`,
-                          time: new Date(),
-                        });
-                      }
-                      if (result.affectedRows === 0) {
-                        res.status(400).send({
-                          errorCode: "400-001",
-                          errorMessage: `Object not found`,
-                          errorDetails: `Student ${id} not enrolled for Course ${courseId}.`,
-                          callId: uuid(),
-                          requestUserId: `${requestorid}`,
-                          apiVersion: `${apiVersion}`,
-                          time: new Date(),
-                        });
-                      } else {
-                        console.log(result.affectedRows + " record(s) updated");
-                        res.status(200).send({
-                          errorCode: "000-000",
-                          callId: uuid(),
-                          requestUserId: `${requestorid}`,
-                          apiVersion: `${apiVersion}`,
-                          msg: `Marks updated successfully for Student ${id} enrolled in Course ${courseId} .`,
-                          time: new Date(),
-                        });
-                      }
-                    });
-                  } else {
-                    return res.status(400).json({
-                      errorCode: "400-004",
-                      errorMessage: `Role Error`,
-                      errorDetails: `Requestor ${user[0].Name} is not a teacher.`,
-                      callId: uuid(),
-                      requestUserId: `${requestorid}`,
-                      apiVersion: `${apiVersion}`,
-                      time: new Date(),
-                    });
-                  }
-                } else {
-                  return res.status(400).json({
-                    errorCode: "400-004",
-                    errorMessage: `Role Error`,
-                    errorDetails: `User ${teacherId} role not defined.`,
-                    callId: uuid(),
-                    requestUserId: `${requestorid}`,
-                    apiVersion: `${apiVersion}`,
-                    time: new Date(),
-                  });
-                }
-              },
-              (error) => {
-                res.status(500).send({
-                  errorCode: "500-001",
-                  errorMessage: `Server Error`,
-                  errorDetails: `${requestorid} - Internal Server Error.`,
-                  callId: uuid(),
-                  requestUserId: `${requestorid}`,
-                  apiVersion: `${apiVersion}`,
-                  time: new Date(),
-                });
-              }
-            );
-          } else {
-            res.status(400).send({
-              errorCode: "400-001",
-              errorMessage: `Object not found`,
-              errorDetails: `${requestorid} - Teacher not found.`,
-              callId: uuid(),
-              requestUserId: `${requestorid}`,
-              apiVersion: `${apiVersion}`,
-              time: new Date(),
-            });
-          }
-        },
-        (error) => {
-          res.status(500).send({
-            errorCode: "500-001",
-            errorMessage: `Server Error`,
-            errorDetails: `${requestorid} - Internal Server Error.`,
+    if (parseInt(marks) > 0) {
+      var sqlQuery = `UPDATE mydb.enrolments SET Mark = ${marks} WHERE CourseID=${courseId} and UserID=${id};`;
+      db.query(sqlQuery, (err, result) => {
+        if (err) {
+          console.log(err);
+          return res.status(400).json({
+            errorCode: "400-001",
+            errorMessage: `Object not found`,
+            errorDetails: `Student ${id} not enrolled for Course ${courseId}.`,
             callId: uuid(),
             requestUserId: `${requestorid}`,
             apiVersion: `${apiVersion}`,
             time: new Date(),
           });
         }
-      );
+        if (result.affectedRows === 0) {
+          res.status(400).send({
+            errorCode: "400-001",
+            errorMessage: `Object not found`,
+            errorDetails: `Student ${id} not enrolled for Course ${courseId}.`,
+            callId: uuid(),
+            requestUserId: `${requestorid}`,
+            apiVersion: `${apiVersion}`,
+            time: new Date(),
+          });
+        } else {
+          console.log(result.affectedRows + " record(s) updated");
+          res.status(200).send({
+            errorCode: "000-000",
+            callId: uuid(),
+            requestUserId: `${requestorid}`,
+            apiVersion: `${apiVersion}`,
+            msg: `Marks updated successfully for Student ${id} enrolled in Course ${courseId}.`,
+            time: new Date(),
+          });
+        }
+      });
     } else {
-      res.status(400).send({
-        errorCode: "400-003",
-        errorMessage: `Missing required parameter`,
-        errorDetails: `Missing Requestor ID`,
+      return res.status(400).json({
+        errorCode: "400-002",
+        errorMessage: `Invalid format or value`,
+        errorDetails: `Negative or zero marks not allowed`,
         callId: uuid(),
         requestUserId: `${requestorid}`,
         apiVersion: `${apiVersion}`,
