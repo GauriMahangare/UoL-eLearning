@@ -147,7 +147,7 @@ router.get("/", async (req, res) => {
 
 // Get detail of one course
 router.get(
-  "/detail/:id",
+  "/:id",
   [
     check("requestorid")
       .isInt()
@@ -155,7 +155,7 @@ router.get(
     check("id").isInt().withMessage("Course ID needs to be numeric."),
   ],
   (req, res) => {
-    const { id } = req.params; //Student ID
+    const { id } = req.params; //Course ID
     const { requestorid } = req.headers; // Teacher ID
 
     const errors = validationResult(req);
@@ -229,7 +229,7 @@ router.get(
                   return res.status(400).json({
                     errorCode: "400-001",
                     errorMessage: `Object not Found`,
-                    errorDetails: `${courseId} - Course not Found.`,
+                    errorDetails: `${id} - Course not Found.`,
                     callId: uuid(),
                     requestUserId: `${requestorid}`,
                     apiVersion: `${apiVersion}`,

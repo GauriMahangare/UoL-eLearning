@@ -32,7 +32,8 @@ async function userExists(userID) {
 }
 
 async function checkPermission(url, method, userRole) {
-  query = `SELECT * FROM mydb.Permissions WHERE URL="${url}" AND Method="${method}" AND RoleId=${userRole}`;
+  query = `SELECT * FROM mydb.Permissions WHERE URL= "${url}" AND Method="${method}" AND RoleId=${userRole}`;
+  console.log(query);
   let permission = await db.promise().query(query);
   return await permission;
 }
@@ -56,9 +57,14 @@ app.use((req, res, next) => {
         urlArrayFinal = [];
         urlArrayFinal = urlArray.split("/");
         let url = "/";
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < urlArrayFinal.length; i++) {
+          urlArrayFinal[i];
           if (urlArrayFinal[i]) {
-            url += urlArrayFinal[i] + "/";
+            if (parseInt(urlArrayFinal[i])) {
+              continue;
+            } else {
+              url += urlArrayFinal[i] + "/";
+            }
           }
         }
         // check the permission for the user role
