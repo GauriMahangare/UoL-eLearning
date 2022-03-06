@@ -33,7 +33,6 @@ async function userExists(userID) {
 
 async function checkPermission(url, method, userRole) {
   query = `SELECT * FROM mydb.Permissions WHERE URL= "${url}" AND Method="${method}" AND RoleId=${userRole}`;
-  console.log(query);
   let permission = await db.promise().query(query);
   return await permission;
 }
